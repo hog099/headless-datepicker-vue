@@ -10,7 +10,14 @@ const MONTH_NAMES = [
 
 export function useDatePicker() {
     const engine = createEngine();
-    const state = reactive<CalendarState>(engine.getState());
+    const initialState = engine.getState();
+    const state = reactive<CalendarState>({
+        grid: initialState.grid,
+        currentMonth: initialState.currentMonth,
+        currentYear: initialState.currentYear,
+        selectedDate: initialState.selectedDate,
+        viewDate: initialState.viewDate,
+    });
 
     const sync = () => {
         const fresh = engine.getState();

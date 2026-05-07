@@ -4,11 +4,19 @@
 
     <div v-if="open" class="popover">
       <div class="header">
-        <button @click="prevYear" class="nav-btn" aria-label="Previous year">«</button>
-        <button @click="prevMonth" class="nav-btn" aria-label="Previous month">‹</button>
+        <button type="button" @click="prevYear" class="nav-btn" aria-label="Previous year" title="Previous year">
+          <img class="nav-icon" :src="chevronsLeftIcon" alt="" aria-hidden="true" />
+        </button>
+        <button type="button" @click="prevMonth" class="nav-btn" aria-label="Previous month" title="Previous month">
+          <img class="nav-icon" :src="chevronLeftIcon" alt="" aria-hidden="true" />
+        </button>
         <span class="month-label">{{ monthLabel }}</span>
-        <button @click="nextMonth" class="nav-btn" aria-label="Next month">›</button>
-        <button @click="nextYear" class="nav-btn" aria-label="Next year">»</button>
+        <button type="button" @click="nextMonth" class="nav-btn" aria-label="Next month" title="Next month">
+          <img class="nav-icon" :src="chevronRightIcon" alt="" aria-hidden="true" />
+        </button>
+        <button type="button" @click="nextYear" class="nav-btn" aria-label="Next year" title="Next year">
+          <img class="nav-icon" :src="chevronsRightIcon" alt="" aria-hidden="true" />
+        </button>
       </div>
 
       <div class="weekdays">
@@ -21,6 +29,7 @@
         <button
           v-for="(cell, index) in state.grid"
           :key="index"
+          type="button"
           :class="['cell', { 'other-month': !cell.isCurrentMonth }, { today: cell.isToday }, { selected: cell.isSelected }]"
           @click="handleSelect(cell.date)"
           role="gridcell"
@@ -32,7 +41,7 @@
       </div>
 
       <div class="footer">
-        <button @click="goToToday" class="today-btn">Today</button>
+        <button type="button" @click="goToToday" class="today-btn">Today</button>
       </div>
     </div>
   </div>
@@ -41,6 +50,11 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useDatePicker } from "../composables/useDatePicker";
+
+const chevronLeftIcon = new URL("../assets/icons/chevron-left.svg", import.meta.url).href;
+const chevronRightIcon = new URL("../assets/icons/chevron-right.svg", import.meta.url).href;
+const chevronsLeftIcon = new URL("../assets/icons/chevrons-left.svg", import.meta.url).href;
+const chevronsRightIcon = new URL("../assets/icons/chevrons-right.svg", import.meta.url).href;
 
 const { state, formattedDate, monthLabel, nextMonth, prevMonth, nextYear, prevYear, selectDate, goToToday } = useDatePicker();
 const open = ref(false);
@@ -89,6 +103,12 @@ const vClickOutside = {
   min-width: 140px;
 }
 
+.date-input:focus {
+  border-color: var(--dp-primary);
+  outline: 2px solid color-mix(in srgb, var(--dp-primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
 .popover {
   position: absolute;
   top: calc(100% + 4px);
@@ -113,14 +133,25 @@ const vClickOutside = {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  font-size: 1rem;
+  padding: 0.25rem;
   color: var(--dp-text);
   border-radius: calc(var(--dp-radius) / 2);
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-btn:hover {
   background: var(--dp-hover);
+}
+
+.nav-icon {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+  pointer-events: none;
 }
 
 .month-label {

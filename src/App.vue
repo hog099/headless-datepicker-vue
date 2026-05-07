@@ -31,7 +31,14 @@ body {
 }
 
 .app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   max-width: 400px;
   margin: 0 auto;
+}
+
+.app h1 {
+  text-align: center;
 }
 </style>
