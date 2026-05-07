@@ -1,5 +1,3 @@
-<script setup lang="ts"></script>
-
 <template>
   <div class="app">
     <h1>Headless Date Picker</h1>
@@ -7,6 +5,9 @@
   </div>
 </template>
 
+<script setup lang="ts">
+import DatePicker from "./components/DatePicker.vue";
+</script>
 
 <style>
 :root {
@@ -21,7 +22,10 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   background: #f9fafb;
   padding: 2rem;
 }
