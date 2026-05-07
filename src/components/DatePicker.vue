@@ -1,8 +1,31 @@
 <template>
-  <div class="date-picker" v-click-outside="closePopover" @keydown.esc="closePopover">
-    <input type="text" readonly :value="formattedDate" @click="openPopover" placeholder="Select a date" class="date-input" />
+  <div class="date-picker" v-click-outside="() => closePopover()" @keydown.esc="closePopover(true)">
+    <input
+      id="date-picker-input"
+      ref="inputRef"
+      type="text"
+      readonly
+      :value="formattedDate"
+      aria-label="Select date"
+      aria-haspopup="dialog"
+      aria-controls="date-picker-popover"
+      :aria-expanded="open"
+      @click="openPopover"
+      @keydown.enter.prevent="openPopover"
+      @keydown.space.prevent="openPopover"
+      @keydown.arrow-down.prevent="openPopover"
+      placeholder="Select a date"
+      class="date-input"
+    />
 
-    <div v-if="open" class="popover">
+    <div
+      v-if="open"
+      id="date-picker-popover"
+      class="popover"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="date-picker-month"
+    >
       <div class="header">
         <button type="button" @click="prevYear" class="nav-btn" aria-label="Previous year" title="Previous year">
           <img class="nav-icon" :src="chevronsLeftIcon" alt="" aria-hidden="true" />
@@ -10,7 +33,7 @@
         <button type="button" @click="prevMonth" class="nav-btn" aria-label="Previous month" title="Previous month">
           <img class="nav-icon" :src="chevronLeftIcon" alt="" aria-hidden="true" />
         </button>
-        <span class="month-label">{{ monthLabel }}</span>
+        <span id="date-picker-month" class="month-label">{{ monthLabel }}</span>
         <button type="button" @click="nextMonth" class="nav-btn" aria-label="Next month" title="Next month">
           <img class="nav-icon" :src="chevronRightIcon" alt="" aria-hidden="true" />
         </button>
@@ -25,16 +48,20 @@
         </span>
       </div>
 
-      <div class="grid" role="grid">
+      <div class="grid" role="grid" :aria-label="monthLabel">
         <button
           v-for="(cell, index) in state.grid"
           :key="index"
+          :ref="(el) => setDayButton(el, index)"
           type="button"
           :class="['cell', { 'other-month': !cell.isCurrentMonth }, { today: cell.isToday }, { selected: cell.isSelected }]"
           @click="handleSelect(cell.date)"
           role="gridcell"
-          :tabindex="cell.isCurrentMonth ? 0 : -1"
-          @keydown.enter="handleSelect(cell.date)"
+          :aria-label="formatAccessibleDate(cell.date)"
+          :aria-selected="cell.isSelected"
+          :aria-current="cell.isToday ? 'date' : undefined"
+          :tabindex="getCellTabIndex(index)"
+          @keydown="handleCellKeydown($event, index)"
         >
           {{ cell.dayOfMonth }}
         </button>
@@ -48,7 +75,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { nextTick, onBeforeUpdate, ref } from "vue";
+import type { ComponentPublicInstance } from "vue";
 import { useDatePicker } from "../composables/useDatePicker";
 
 const chevronLeftIcon = new URL("../assets/icons/chevron-left.svg", import.meta.url).href;
@@ -58,18 +86,95 @@ const chevronsRightIcon = new URL("../assets/icons/chevrons-right.svg", import.m
 
 const { state, formattedDate, monthLabel, nextMonth, prevMonth, nextYear, prevYear, selectDate, goToToday } = useDatePicker();
 const open = ref(false);
+const inputRef = ref<HTMLInputElement | null>(null);
+const dayButtons = ref<HTMLButtonElement[]>([]);
 
 const openPopover = () => {
   open.value = true;
+  nextTick(() => {
+    focusActiveCell();
+  });
 };
 
-const closePopover = () => {
+const closePopover = (returnFocus = false) => {
   open.value = false;
+
+  if (returnFocus) {
+    nextTick(() => {
+      inputRef.value?.focus();
+    });
+  }
 };
 
 const handleSelect = (date: Date) => {
   selectDate(date);
-  closePopover();
+  closePopover(true);
+};
+
+const setDayButton = (el: Element | ComponentPublicInstance | null, index: number) => {
+  if (el instanceof HTMLButtonElement) {
+    dayButtons.value[index] = el;
+  }
+};
+
+onBeforeUpdate(() => {
+  dayButtons.value = [];
+});
+
+const getActiveCellIndex = () => {
+  const selectedIndex = state.grid.findIndex((cell) => cell.isSelected);
+  if (selectedIndex !== -1) return selectedIndex;
+
+  const todayIndex = state.grid.findIndex((cell) => cell.isToday && cell.isCurrentMonth);
+  if (todayIndex !== -1) return todayIndex;
+
+  return state.grid.findIndex((cell) => cell.isCurrentMonth);
+};
+
+const getCellTabIndex = (index: number) => {
+  return index === getActiveCellIndex() ? 0 : -1;
+};
+
+const focusCell = (index: number) => {
+  dayButtons.value[index]?.focus();
+};
+
+const focusActiveCell = () => {
+  focusCell(getActiveCellIndex());
+};
+
+const handleCellKeydown = (event: KeyboardEvent, index: number) => {
+  const keyMap: Record<string, number> = {
+    ArrowLeft: index - 1,
+    ArrowRight: index + 1,
+    ArrowUp: index - 7,
+    ArrowDown: index + 7,
+    Home: index - (index % 7),
+    End: index + (6 - (index % 7)),
+  };
+
+  if (event.key === "Enter" || event.key === " ") {
+    const cell = state.grid[index];
+    if (!cell) return;
+
+    event.preventDefault();
+    handleSelect(cell.date);
+    return;
+  }
+
+  const nextIndex = keyMap[event.key];
+  if (nextIndex === undefined) return;
+
+  event.preventDefault();
+  if (nextIndex >= 0 && nextIndex < state.grid.length) {
+    focusCell(nextIndex);
+  }
+};
+
+const formatAccessibleDate = (date: Date) => {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "full",
+  }).format(date);
 };
 
 const vClickOutside = {
