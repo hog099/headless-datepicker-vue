@@ -2,6 +2,8 @@
 
 A small Vue 3 + Vite date picker built with separated date engine logic, composables, reusable date utilities, SVG navigation icons, and basic accessibility support.
 
+Live preview: https://hog099.github.io/headless-datepicker-vue/
+
 ![Headless Date Picker](.github/headless-date-picker.png)
 
 ## Approach
