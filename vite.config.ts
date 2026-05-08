@@ -6,7 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/headless-datepicker/",
+  base: "/headless-datepicker-vue/",
   server: {
     port: 3004,
   },
